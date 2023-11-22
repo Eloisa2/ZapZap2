@@ -1,8 +1,9 @@
-import { View, Text, Image, StatusBar, StyleSheet,TextInput, TouchableOpacity, Button} from 'react-native'
-import React, { useContext, useRef, useState } from 'react'
+import { View, Text, Image, StatusBar, StyleSheet,TextInput, TouchableOpacity, Button, Alert} from 'react-native'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import Modal from 'react-native-modal';
 import Send from './../../assets/send.png'
 import { Ionicons } from '@expo/vector-icons'; 
+import base64 from 'base-64';
 
 import{
   useFonts,
@@ -12,11 +13,17 @@ import{
   
 }from '@expo-google-fonts/roboto';
 import { TemaContext, TemaProvider } from '../../common/tema';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 export default function Barra(){
   const [isModalVisible, setModalVisible] = useState(false);
   const {tema,corLetra,setTema,setCorLetra,fundoEscuro,setFundoEscuro}=useContext(TemaContext);
+  const [nome,setNome]=useState('');
+  const [email,setEmail]=useState('');
+  const [idUsuario, setIdUsuario] = useState(null); 
   const [icone,setIcone]=useState('moon');
+  const [status,setStatus]=useState(true);
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
@@ -26,7 +33,53 @@ export default function Barra(){
     setModalContato(!ModalContato);
   }
 
+  function criaContato() {
+    // Verificar se o e-mail já existe no sistema
+    axios.get(`http://10.0.2.2:8000/usuarios/verificar-email/${email}`).then((response) => {
+      if (response.data.existe) {
+        // O e-mail já existe, então podemos criar o contato
+        axios.post('http://10.0.2.2:8000/contatos', {
+          nome,
+          email,
+          id_usuario: idUsuario,
+        }).then(() => {
+          Alert.alert('Contato criado com sucesso');
+          setStatus(!status)
+        }).catch((error) => {
+          console.error('Erro ao criar contato:', error);
+          Alert.alert('Erro', 'Erro ao criar contato. Tente novamente.');
+        });
+      } else {
+        // E-mail não encontrado, exiba uma mensagem de erro
+        Alert.alert('Erro', 'O e-mail não está cadastrado no sistema. Verifique o e-mail e tente novamente.');
+      }
+    }).catch((error) => {
+      console.error('Erro ao verificar o e-mail:', error);
+      Alert.alert('Erro', 'Erro ao verificar o e-mail. Tente novamente.');
+    });
+  }
   
+  
+
+
+  useEffect(() => {
+    const loadTokenAndDecode = async () => {
+      try {
+        const authToken = await AsyncStorage.getItem('authToken');
+
+        if (authToken) {
+          const payload = authToken.split('.')[1];
+          const decodedPayload = JSON.parse(base64.decode(payload));
+          setIdUsuario(decodedPayload.id);
+        }
+      } catch (error) {
+        console.error('Erro ao obter ou decodificar o token:', error);
+      }
+    };
+
+    loadTokenAndDecode();
+
+  }, [idUsuario,status]);
 
   const tamanhoStatus = StatusBar.currentHeight;
   const [FontLoaded]=useFonts({
@@ -69,23 +122,27 @@ export default function Barra(){
         <View style={{ backgroundColor: 'white',width:'100%',justifyContent:'center', alignItems:'center',height:'auto',borderRadius:5}}>
           <Text style={{marginBottom:10,justifyContent:'center',marginTop:10,fontSize:19}}>Adicionar Contato</Text>
 
+
+{/* parte de adicionar o contato */}
           <View>
             <View style={{flexDirection:'row',gap:5}}>
           <Text style={{marginTop:6}}>Nome:</Text>
-        <TextInput style={{height:40,width:'80%',backgroundColor:'#d5d5d5',borderRadius:10,padding:10}}/>
+        <TextInput style={{height:40,width:'80%',backgroundColor:'#d5d5d5',borderRadius:10,padding:10}} onChangeText={(e)=>setNome(e)}/>
             </View>
 
             <View style={{flexDirection:'row',gap:5,marginTop:20}}>
           <Text style={{marginTop:6}}>E-mail:</Text>
-        <TextInput style={{height:40,width:'80%',backgroundColor:'#d5d5d5',borderRadius:10,padding:10}}/>
+        <TextInput style={{height:40,width:'80%',backgroundColor:'#d5d5d5',borderRadius:10,padding:10}} onChangeText={(e)=>setEmail(e)}/>
             </View>
 
-        <TouchableOpacity style={{justifyContent:'center',alignItems:'center'}}>
+        <TouchableOpacity onPress={()=>criaContato()} style={{justifyContent:'center',alignItems:'center'}}>
           <View style={{backgroundColor:'#2596BB',height:30,justifyContent:'center',width:100,alignItems:'center',marginBottom:10,marginTop:10}}>
             <Text style={{color:'#fff',}}> ADICIONAR</Text>
           </View>
         </TouchableOpacity>
 
+
+{/* parte de adicionar o contato */}
           </View>
 
         </View>

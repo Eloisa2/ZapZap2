@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { Fragment, useContext, useEffect, useState } from 'react'
 import { View, Text } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Chats from '../../pages/Chats'
@@ -7,11 +7,14 @@ import Perfil from '../../pages/Perfil'
 import { Ionicons } from '@expo/vector-icons';
 import Barra from '../Barra'
 import { TemaContext } from '../../common/tema';
+import { AuthContext } from '../../pages/Login/AuthContext';
 
 
 export default function TabNavigator() {
   const Tab = createBottomTabNavigator();
   const {tema,corLetra}=useContext(TemaContext);
+
+
 
   return (
     <>

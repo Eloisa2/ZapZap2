@@ -1,29 +1,43 @@
-import { View, Text, Image, Button, TouchableOpacity, ScrollView } from 'react-native';
-import React, { useContext } from 'react';
-import PerfilIcone from '../../assets/perfil-icon.png'
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
+import PerfilIcone from '../../assets/perfil-icon.png';
 import { Ionicons } from '@expo/vector-icons';
-
-import {
-  useFonts,
-  Roboto_700Bold,
-  Roboto_100Thin,
-  Roboto_300Light_Italic,
-} from '@expo-google-fonts/roboto';
+import { useFonts, Roboto_700Bold } from '@expo-google-fonts/roboto';
 import { TemaContext } from '../../common/tema';
+import { AuthContext } from './../Login/AuthContext'; 
 
+export default function Perfil({ route, navigation }) {
+  const { tema, corLetra } = useContext(TemaContext);
+  const { Aparecer } = route.params;
+  const { logout,getUserName } = useContext(AuthContext);
+  const [userName, setUserName] = useState('');
 
-export default function Perfil({route}) {
-  const {tema,corLetra}=useContext(TemaContext);
-  const {  Aparecer } = route.params;
-  console.log(Aparecer);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigation.replace('login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      const name = await getUserName(); // Utilize a função para obter o nome
+      setUserName(name);
+    };
+
+    fetchUserName();
+  }, []);
+
   const [FontLoaded] = useFonts({
-    Roboto_100Thin,
     Roboto_700Bold,
-    Roboto_300Light_Italic
   });
+
   if (!FontLoaded) {
     return null;
   }
+
   return (
     <View
       style={{
@@ -31,7 +45,7 @@ export default function Perfil({route}) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        backgroundColor:tema
+        backgroundColor: tema,
       }}
     >
       <TouchableOpacity activeOpacity={0.7}>
@@ -45,7 +59,8 @@ export default function Perfil({route}) {
               marginTop: 10,
               justifyContent: 'center',
             }}
-            source={PerfilIcone} />
+            source={PerfilIcone}
+          />
         </View>
 
         <View style={{
@@ -56,9 +71,14 @@ export default function Perfil({route}) {
         </View>
       </TouchableOpacity>
       <TouchableOpacity activeOpacity={0.7}>
-        <Text style={{ color: corLetra, fontSize: 20, fontFamily: 'Roboto_700Bold', marginTop: 15, textAlign: 'center' }}>Nome</Text>
+        <Text style={{ color: corLetra, fontSize: 20, fontFamily: 'Roboto_700Bold', marginTop: 15, textAlign: 'center' }}>{userName}</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity onPress={handleLogout} style={{ marginTop: 20 }}>
+        <View style={{ backgroundColor: '#012965', height: 40, width: 100, alignItems: 'center', justifyContent: 'center', borderRadius: 15 }}>
+          <Text style={{ color: '#fff' }}>Sair</Text>
+        </View>
+      </TouchableOpacity>
     </View>
-  )
+  );
 }
